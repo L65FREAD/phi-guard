@@ -25,14 +25,15 @@ Restart Claude Code afterwards. Requires `python3` on your PATH.
 | SSNs | Dates of birth (`DOB`, `born`) |
 | Email addresses | MRNs and patient IDs |
 | Formatted phone numbers, `+1XXXXXXXXXX` | Rx numbers |
-| Slash dates (`03/14/1961`) and written dates (`March 3, 1975`) | Member, policy and group IDs |
+| Dates: `03/14/1961`, `1961/03/14`, `1961-03-14`, `March 3, 1975` | Member, policy and group IDs |
 | Street addresses (capitalised) and PO boxes | Bare 10-digit phone numbers |
-| | Names (after `patient`, `pt`, `name:`, `Mr.`/`Mrs.`/`Ms.`) |
+| Full names that start with a common first name (`John Smith`) | Other names (after `patient`, `pt`, `name:`, `Mr.`/`Mrs.`/`Ms.`) |
+| Any capitalised full name written next to a date | |
 
 ## What it does not catch
 
-- Names with no label in front ("John Smith called about his refill").
-- ISO dates and timestamps (`2026-11-11`) unless labelled as a DOB.
+- Less common names with no label or date beside them ("Okafor Nwosu called about his refill"), and names typed in lowercase.
+- Timestamps (`2026-11-11T10:22:01Z`, `2026-11-11 10:22:01`) and dates inside file names or paths.
 - Lowercase street addresses.
 - Anything Claude reads from files, tools or connectors. Only typed or pasted prompts are scanned.
 

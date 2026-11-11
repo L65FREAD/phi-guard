@@ -26,10 +26,32 @@ MONTH = (
 NUMERIC_DATE = r"\d{1,2}[/.-]\d{1,2}[/.-](?:\d{4}|\d{2})"
 ISO_DATE = r"(?:19|20)\d{2}-\d{1,2}-\d{1,2}"
 WORD_DATE = rf"(?:{MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}|\d{{1,2}}(?:st|nd|rd|th)?\s+{MONTH},?\s+\d{{4}})"
-ANY_DATE = rf"(?:{ISO_DATE}|{NUMERIC_DATE}|{WORD_DATE})"
+YEAR_FIRST_DATE = r"(?:19|20)\d{2}/\d{1,2}/\d{1,2}"
+ANY_DATE = rf"(?:{ISO_DATE}|{YEAR_FIRST_DATE}|{NUMERIC_DATE}|{WORD_DATE})"
 
 NAME = r"[A-Z][a-z]+(?:[-'][A-Z]?[a-z]+)?"
 FULL_NAME = rf"{NAME}(?:\s+[A-Z]\b\.?)?(?:\s+{NAME}){{0,2}}"
+# Common first names, minus ones that double as ordinary words (Will, Mark, Grant...).
+FIRST_NAMES = (
+    "James|John|Robert|Michael|William|David|Richard|Joseph|Thomas|Charles|Christopher|"
+    "Daniel|Matthew|Anthony|Donald|Steven|Paul|Andrew|Joshua|Kenneth|Kevin|Brian|George|"
+    "Edward|Ronald|Timothy|Jason|Jeffrey|Ryan|Jacob|Gary|Nicholas|Eric|Jonathan|Stephen|"
+    "Larry|Justin|Scott|Brandon|Benjamin|Samuel|Gregory|Alexander|Patrick|Raymond|Dennis|"
+    "Jerry|Tyler|Aaron|Jose|Adam|Nathan|Henry|Douglas|Zachary|Peter|Kyle|Walter|Ethan|"
+    "Jeremy|Harold|Keith|Roger|Gerald|Carl|Terry|Sean|Arthur|Lawrence|Jesse|Dylan|Bryan|"
+    "Joe|Billy|Bruce|Albert|Willie|Gabriel|Logan|Alan|Juan|Wayne|Roy|Ralph|Randy|Eugene|"
+    "Vincent|Russell|Louis|Bobby|Philip|Johnny|Carlos|Luis|Miguel|Jorge|Pedro|Noah|Liam|"
+    "Lucas|Elijah|Oliver|Mary|Patricia|Jennifer|Linda|Elizabeth|Barbara|Susan|Jessica|"
+    "Sarah|Karen|Nancy|Lisa|Betty|Margaret|Sandra|Ashley|Kimberly|Emily|Donna|Michelle|"
+    "Dorothy|Amanda|Melissa|Deborah|Stephanie|Rebecca|Sharon|Laura|Cynthia|Kathleen|Amy|"
+    "Shirley|Angela|Helen|Anna|Brenda|Pamela|Nicole|Emma|Samantha|Katherine|Christine|"
+    "Debra|Rachel|Catherine|Carolyn|Janet|Ruth|Maria|Heather|Diane|Julie|Joyce|Victoria|"
+    "Olivia|Kelly|Christina|Lauren|Joan|Evelyn|Judith|Megan|Cheryl|Andrea|Hannah|Martha|"
+    "Jacqueline|Frances|Gloria|Ann|Teresa|Kathryn|Sara|Janice|Jean|Alice|Abigail|Julia|"
+    "Judy|Sophia|Denise|Marilyn|Beverly|Danielle|Theresa|Diana|Natalie|Brittany|"
+    "Charlotte|Marie|Kayla|Alexis|Lori|Rosa|Ana|Carmen|Isabella|Mia|Ava"
+)
+DATE_LEAD = r"\s*[,;:(|\u2013-]*\s*(?:(?i:dob|d\.o\.b\.?|born|birth ?date|date of birth)\s*[:=]?\s*)?"
 STREET_SUFFIX = (
     r"(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Way|"
     r"Place|Pl|Circle|Cir|Parkway|Pkwy|Highway|Hwy|Terrace|Ter|Trail|Trl)"
@@ -44,6 +66,10 @@ NOT_NAMES = {
     "detail", "details", "lookup", "sync", "import", "export", "queue", "status",
     "the", "a", "an", "is", "was", "has", "and", "or", "not", "null", "none", "true",
     "false", "string", "error", "column", "key", "value", "component", "module",
+    "last", "updated", "created", "modified", "released", "date", "due", "on", "since",
+    "until", "from", "effective", "expires", "expired", "version", "build", "started",
+    "ended", "completed", "scheduled", "posted", "published", "as", "of", "by", "at",
+    "in", "to", "for", "with", "this", "that", "these", "those", "it", "we", "i",
 }
 
 # (label, pattern, group to redact). Earlier entries win when matches overlap.
@@ -59,10 +85,16 @@ DETECTORS = [
     ("PHONE", re.compile(r"(?<![\w.])\+1\d{10}(?!\d)"), 0),
     ("PHONE", re.compile(r"(?i)\b(?:phone|cell|mobile|tel|telephone|fax|callback)(?: number| no\.?| #)?\s*[:#=]?\s*(\d{10})\b"), 1),
     ("DATE", re.compile(rf"(?<![\w/.-])\d{{1,2}}/\d{{1,2}}/(?:\d{{4}}|\d{{2}})(?![\w/-])"), 0),
+    ("DATE", re.compile(rf"(?<![\w/.-]){YEAR_FIRST_DATE}(?![\w/-])"), 0),
+    ("DATE", re.compile(r"(?<![\w/.-])(?:19|20)\d{2}-(?:0?[1-9]|1[0-2])-(?:0?[1-9]|[12]\d|3[01])(?![\w-]|\.\w|\s+\d{1,2}:\d{2})"), 0),
     ("DATE", re.compile(rf"\b{WORD_DATE}"), 0),
     ("ADDRESS", re.compile(rf"\b\d{{1,6}}\s+(?:[NSEW]\.?\s+)?(?:[A-Z0-9][A-Za-z0-9.'-]*\s+){{1,4}}{STREET_SUFFIX}\b\.?(?:,?\s+(?:Apt|Apartment|Suite|Ste|Unit|#)\.?\s*[A-Za-z0-9-]+)?"), 0),
     ("ADDRESS", re.compile(r"(?i)\bP\.?\s?O\.?\s+Box\s+\d+"), 0),
     ("NAME", re.compile(rf"\b(?:[Pp]atient|PATIENT|[Pp]t|[Mm]ember|[Ss]ubscriber|[Cc]aregiver|[Gg]uarantor)(?:'s)?(?:\s+(?:[Nn]ame|is|named|called))?\s*[:=]?\s+({FULL_NAME})"), 1),
+    ("NAME", re.compile(rf"\b({NAME}(?:\s+[A-Z]\b\.?)?(?:\s+{NAME}){{1,2}})(?={DATE_LEAD}{ANY_DATE})"), 1),
+    ("NAME", re.compile(rf"\b({NAME},\s+{NAME}(?:\s+[A-Z]\b\.?)?)(?={DATE_LEAD}{ANY_DATE})"), 1),
+    ("NAME", re.compile(rf"{ANY_DATE}\s*[,;:)|\u2013-]*\s*({NAME}(?:\s+[A-Z]\b\.?)?(?:\s+{NAME}){{1,2}})"), 1),
+    ("NAME", re.compile(rf"\b((?:{FIRST_NAMES})\s+(?:[A-Z]\b\.?\s+)?{NAME})"), 1),
     ("NAME", re.compile(rf"\b(?:Mr|Mrs|Ms|Miss|Mx)\.?\s+({FULL_NAME})"), 1),
     ("NAME", re.compile(rf"(?i:\b(?:first|last|full|patient|pt)?[ _]?name)\s*[:=]\s*[\"']?({FULL_NAME})"), 1),
 ]
@@ -94,9 +126,9 @@ def find_phi(text):
             if label == "NAME":
                 # Drop trailing/leading ordinary words ("Patient Portal", "Patient Record ID").
                 words = value.split()
-                while words and words[-1].lower().strip(".") in NOT_NAMES:
+                while words and words[-1].lower().strip(".,") in NOT_NAMES:
                     words.pop()
-                if not words or words[0].lower() in NOT_NAMES:
+                if not words or any(w.lower().strip(".,") in NOT_NAMES for w in words):
                     continue
                 value = " ".join(words)
                 end = start + len(value)

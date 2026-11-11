@@ -1,6 +1,6 @@
 {
   "name": "phi-guard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blocks prompts containing likely PHI before they reach the model and hands back a scrubbed copy to resend.",
   "author": {
     "name": "L65FREAD"
