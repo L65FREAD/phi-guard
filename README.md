@@ -7,7 +7,7 @@ This is a convenience guard, not a compliance control. It uses pattern matching,
 ## Install
 
 ```
-/plugin marketplace add L65FREAD/claude-phi-guard
+/plugin marketplace add L65FREAD/phi-guard
 /plugin install phi-guard@phi-guard
 ```
 
