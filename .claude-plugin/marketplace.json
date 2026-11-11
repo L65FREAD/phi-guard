@@ -1,0 +1,17 @@
+{
+  "name": "phi-guard",
+  "owner": {
+    "name": "L65FREAD"
+  },
+  "metadata": {
+    "description": "Keeps PHI out of Claude Code prompts.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "phi-guard",
+      "source": "./plugins/phi-guard",
+      "description": "Blocks prompts containing likely PHI and hands back a scrubbed copy to resend."
+    }
+  ]
+}

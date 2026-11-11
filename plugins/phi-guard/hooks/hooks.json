@@ -1,0 +1,15 @@
+{
+  "description": "Scan each prompt for PHI before it is sent",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/phi_guard.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
